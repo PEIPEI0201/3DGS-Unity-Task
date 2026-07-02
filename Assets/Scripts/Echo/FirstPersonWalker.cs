@@ -14,6 +14,11 @@ public class FirstPersonWalker : MonoBehaviour
     public bool floatMode = true;
     public float gravity = -9.81f;
 
+    [Header("移动边界 (世界坐标, 防止走出全景 3DGS 重建区而穿模)")]
+    public bool clampBounds = false;
+    public Vector3 boundsMin = new Vector3(-1.2f, 0f, -30f);
+    public Vector3 boundsMax = new Vector3(1.2f, 0f, 2f);
+
     [Header("视角")]
     public float mouseSensitivity = 2f;
     public float minPitch = -75f, maxPitch = 75f;
@@ -68,6 +73,14 @@ public class FirstPersonWalker : MonoBehaviour
             vSpeed += gravity * Time.deltaTime;
             move.y = vSpeed;
             cc.Move(move * Time.deltaTime);
+        }
+
+        if (clampBounds)
+        {
+            var p = transform.position;
+            p.x = Mathf.Clamp(p.x, boundsMin.x, boundsMax.x);
+            p.z = Mathf.Clamp(p.z, boundsMin.z, boundsMax.z);
+            transform.position = p;
         }
     }
 }
