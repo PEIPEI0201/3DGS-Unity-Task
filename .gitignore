@@ -1,0 +1,55 @@
+# ============================================
+# Unity 生成目录（可自动重建，无需入库）
+# ============================================
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Unity 崩溃自动恢复目录
+/[Aa]ssets/_[Rr]ecovery/
+
+# Asset 的 .meta 必须入库；只有当对应资源本身被忽略时才忽略其 meta
+!/[Aa]ssets/**/*.meta
+
+# ============================================
+# IDE / Visual Studio（工程文件由 Unity 自动生成）
+# ============================================
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.unityproj
+*.sln
+*.slnx
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.pdb.meta
+*.mdb
+*.opendb
+*.IDB
+*.Lines
+*.nimble
+*.VC.db
+
+# ============================================
+# 其它
+# ============================================
+sysinfo.txt
+*.stackdump
+*.unitypackage
+*.app
+crashlytics-build.properties
+.DS_Store
+Thumbs.db
