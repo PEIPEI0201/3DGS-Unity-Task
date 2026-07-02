@@ -14,6 +14,9 @@
 # Unity 崩溃自动恢复目录
 /[Aa]ssets/_[Rr]ecovery/
 
+# MCP 截图（临时验证用，无需入库）
+/[Aa]ssets/[Ss]creenshots/
+
 # Asset 的 .meta 必须入库；只有当对应资源本身被忽略时才忽略其 meta
 !/[Aa]ssets/**/*.meta
 
