@@ -180,7 +180,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -770,10 +770,13 @@ MonoBehaviour:
   - "\u8FD9\u680B\u623F\u5B50\u4EE5\u540E\u6CA1\u4EBA\u4F4F\u4E86\u3002"
   - "\u4F60\u6765\u8FC7\uFF0C\u5B83\u5C31\u4E0D\u7A7A\u4E86\u3002"
   letterVoice: {fileID: 0}
+  font: {fileID: 11400000, guid: 875625f7bb5fb8644b1c1035f2a1ec57, type: 2}
   finaleBgm: {fileID: 0}
   startDelay: 2.5
-  seaColor: {r: 1, g: 0.88, b: 0.6, a: 1}
-  burstCount: 400
+  whiteFadeDuration: 6
+  lineFadeDuration: 1
+  lineHold: 3.5
+  letterColor: {r: 0.15, g: 0.13, b: 0.12, a: 1}
 --- !u!4 &715141242
 Transform:
   m_ObjectHideFlags: 0
@@ -977,7 +980,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
