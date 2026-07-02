@@ -49,7 +49,9 @@ public class SceneFader : MonoBehaviour
     IEnumerator GoRoutine(string sceneName)
     {
         yield return FadeTo(1f);
-        SceneManager.LoadScene(sceneName);
+        var op = SceneManager.LoadSceneAsync(sceneName);
+        while (op != null && !op.isDone)
+            yield return null;
     }
 
     IEnumerator FadeTo(float target)
