@@ -162,7 +162,7 @@ public class MemoryLight : MonoBehaviour
 
     // 生成一张柔和的圆形光点贴图（全场共享一次），让粒子呈柔和光晕而非硬方块
     static Texture2D _dotTex;
-    static Material BuildGlowMaterial()
+    public static Material BuildGlowMaterial()
     {
         if (_dotTex == null)
         {

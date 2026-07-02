@@ -11,4 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Corridor.unity
     guid: 0e1285a7e26090646b0fe5a974c0eb6f
+  - enabled: 1
+    path: Assets/Scenes/EmptyRoom.unity
+    guid: cec13e7fc0fe46f479a57734620efe7e
   m_configObjects: {}
