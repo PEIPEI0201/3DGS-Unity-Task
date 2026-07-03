@@ -48,6 +48,12 @@ public class SceneFader : MonoBehaviour
 
     IEnumerator GoRoutine(string sceneName)
     {
+        if (SplatSceneTransition.Instance != null)
+        {
+            yield return SplatSceneTransition.Instance.PlayExitDissolve();
+            SplatSceneTransition.MarkEnterDissolve();
+        }
+
         yield return FadeTo(1f);
         var op = SceneManager.LoadSceneAsync(sceneName);
         while (op != null && !op.isDone)

@@ -217,6 +217,7 @@ namespace GaussianSplatting.Runtime
         DissolveSparkle = 1,
         WaterFlow = 3,
         HologramScan = 4,
+        FocusTunnel = 5,
     }
 
     public enum DissolveMode
@@ -266,6 +267,8 @@ namespace GaussianSplatting.Runtime
         [Range(0f, 0.4f)]
         [Tooltip("柔光水波在颜色上的轻微起伏")]
         public float colorShimmer = 0.12f;
+        [Tooltip("叠加在其他基础模式上，让场景粒子微微流动")]
+        public bool flowOverlay = true;
     }
 
     [Serializable]
@@ -284,6 +287,46 @@ namespace GaussianSplatting.Runtime
         [Range(0f, 1f)]
         public float scanColorMix = 0.55f;
         public Color scanTint = new Color(0.45f, 0.95f, 1f, 1f);
+    }
+
+    [Serializable]
+    public class FocusTunnelSettings
+    {
+        [Header("=== 注视隧道 / 景深聚焦 ===")]
+        [Tooltip("屏幕中心清晰区半径 (NDC)，越小中心越锐")]
+        [Range(0.1f, 0.8f)]
+        public float focusInner = 0.42f;
+        [Tooltip("虚化开始的外围半径 (NDC)")]
+        [Range(0.4f, 1.4f)]
+        public float focusOuter = 1.05f;
+        [Tooltip("外围虚化曲线陡峭程度")]
+        [Range(0.5f, 4f)]
+        public float focusFalloff = 1.8f;
+        [Tooltip("距离越远虚化越强")]
+        [Range(0f, 1f)]
+        public float focusDepthWeight = 0.45f;
+        [Tooltip("距离归一化参考 (米)")]
+        [Range(4f, 40f)]
+        public float focusFarDistance = 18f;
+        [Tooltip("整体虚化强度")]
+        [Range(0.1f, 1f)]
+        public float focusHazeStrength = 0.55f;
+        [Tooltip("虚化区去饱和")]
+        [Range(0f, 1f)]
+        public float focusDesaturate = 0.35f;
+        [Tooltip("虚化区冷色调")]
+        public Color focusCoolTint = new Color(0.72f, 0.8f, 0.95f, 1f);
+    }
+
+    [Serializable]
+    public class RipplePulseSettings
+    {
+        [Header("=== 觉醒波纹 (可叠加在任何模式上) ===")]
+        public Color rippleTint = new Color(1f, 0.88f, 0.62f, 1f);
+        [Range(0.5f, 8f)] public float rippleIntensity = 2.2f;
+        [Range(0.2f, 3f)] public float rippleBandWidth = 1.1f;
+        [Range(2f, 30f)] public float rippleMaxRadius = 14f;
+        [Range(0.5f, 6f)] public float rippleDuration = 2.5f;
     }
 
     [ExecuteInEditMode]
@@ -337,7 +380,17 @@ namespace GaussianSplatting.Runtime
         [SerializeField]
         HologramScanSettings m_HologramScanEffects = new HologramScanSettings();
 
+        [SerializeField]
+        FocusTunnelSettings m_FocusTunnelEffects = new FocusTunnelSettings();
+
+        [SerializeField]
+        RipplePulseSettings m_RippleEffects = new RipplePulseSettings();
+
         float m_EffectTime;
+        float m_RippleRadius;
+        Vector3 m_RippleOrigin;
+        bool m_RipplePlaying;
+        Coroutine m_RippleCoroutine;
         Coroutine m_DissolveCoroutine;
 
         int m_SplatCount; // initially same as asset splat count, but editing can change this
@@ -438,13 +491,29 @@ namespace GaussianSplatting.Runtime
             public static readonly int WaterFlowFrequency = Shader.PropertyToID("_WaterFlowFrequency");
             public static readonly int WaterFlowDirection = Shader.PropertyToID("_WaterFlowDirection");
             public static readonly int WaterFlowColorShimmer = Shader.PropertyToID("_WaterFlowColorShimmer");
+            public static readonly int WaterFlowOverlay = Shader.PropertyToID("_WaterFlowOverlay");
             public static readonly int HologramScanSpeed = Shader.PropertyToID("_HologramScanSpeed");
             public static readonly int HologramScanWaveScale = Shader.PropertyToID("_HologramScanWaveScale");
             public static readonly int HologramScanBandWidth = Shader.PropertyToID("_HologramScanBandWidth");
             public static readonly int HologramScanDirection = Shader.PropertyToID("_HologramScanDirection");
+            public static readonly int HologramScanWorldDirection = Shader.PropertyToID("_HologramScanWorldDirection");
             public static readonly int HologramScanIntensity = Shader.PropertyToID("_HologramScanIntensity");
             public static readonly int HologramScanColorMix = Shader.PropertyToID("_HologramScanColorMix");
             public static readonly int HologramScanTint = Shader.PropertyToID("_HologramScanTint");
+            public static readonly int FocusInner = Shader.PropertyToID("_FocusInner");
+            public static readonly int FocusOuter = Shader.PropertyToID("_FocusOuter");
+            public static readonly int FocusFalloff = Shader.PropertyToID("_FocusFalloff");
+            public static readonly int FocusDepthWeight = Shader.PropertyToID("_FocusDepthWeight");
+            public static readonly int FocusFarDistance = Shader.PropertyToID("_FocusFarDistance");
+            public static readonly int FocusHazeStrength = Shader.PropertyToID("_FocusHazeStrength");
+            public static readonly int FocusDesaturate = Shader.PropertyToID("_FocusDesaturate");
+            public static readonly int FocusCoolTint = Shader.PropertyToID("_FocusCoolTint");
+            public static readonly int RippleActive = Shader.PropertyToID("_RippleActive");
+            public static readonly int RippleOrigin = Shader.PropertyToID("_RippleOrigin");
+            public static readonly int RippleRadius = Shader.PropertyToID("_RippleRadius");
+            public static readonly int RippleWidth = Shader.PropertyToID("_RippleWidth");
+            public static readonly int RippleIntensity = Shader.PropertyToID("_RippleIntensity");
+            public static readonly int RippleTint = Shader.PropertyToID("_RippleTint");
             public static readonly int EffectTime = Shader.PropertyToID("_EffectTime");
         }
 
@@ -633,6 +702,7 @@ namespace GaussianSplatting.Runtime
             var dissolve = m_DissolveEffects;
             var water = m_WaterFlowEffects;
             var scan = m_HologramScanEffects;
+            var focus = m_FocusTunnelEffects;
 
             cmb.SetComputeIntParam(cs, Props.VisualEffectMode, (int)m_VisualEffectMode);
 
@@ -654,19 +724,43 @@ namespace GaussianSplatting.Runtime
                 cmb.SetComputeVectorParam(cs, Props.DissolveBoundsMax, m_Asset.boundsMax);
             }
 
-            cmb.SetComputeFloatParam(cs, Props.WaterFlowAmplitude, water.flowAmplitude);
+            var waterOverlay = water.flowOverlay && m_VisualEffectMode != SplatVisualEffectMode.WaterFlow;
+            var flowAmp = water.flowAmplitude * (waterOverlay ? 2.8f : 1f);
+            cmb.SetComputeFloatParam(cs, Props.WaterFlowAmplitude, flowAmp);
             cmb.SetComputeFloatParam(cs, Props.WaterFlowSpeed, water.flowSpeed);
             cmb.SetComputeFloatParam(cs, Props.WaterFlowFrequency, water.flowFrequency);
             cmb.SetComputeVectorParam(cs, Props.WaterFlowDirection, water.flowDirection);
             cmb.SetComputeFloatParam(cs, Props.WaterFlowColorShimmer, water.colorShimmer);
+            cmb.SetComputeFloatParam(cs, Props.WaterFlowOverlay, waterOverlay ? 1f : 0f);
 
             cmb.SetComputeFloatParam(cs, Props.HologramScanSpeed, scan.scanSpeed);
             cmb.SetComputeFloatParam(cs, Props.HologramScanWaveScale, scan.scanWaveScale);
             cmb.SetComputeFloatParam(cs, Props.HologramScanBandWidth, scan.scanBandWidth);
             cmb.SetComputeVectorParam(cs, Props.HologramScanDirection, scan.scanDirection);
+            var scanWorldDir = transform.TransformDirection(scan.scanDirection);
+            if (scanWorldDir.sqrMagnitude < 1e-6f)
+                scanWorldDir = Vector3.up;
+            cmb.SetComputeVectorParam(cs, Props.HologramScanWorldDirection, scanWorldDir.normalized);
             cmb.SetComputeFloatParam(cs, Props.HologramScanIntensity, scan.scanIntensity);
             cmb.SetComputeFloatParam(cs, Props.HologramScanColorMix, scan.scanColorMix);
             cmb.SetComputeVectorParam(cs, Props.HologramScanTint, new Vector4(scan.scanTint.r, scan.scanTint.g, scan.scanTint.b, 1f));
+
+            cmb.SetComputeFloatParam(cs, Props.FocusInner, focus.focusInner);
+            cmb.SetComputeFloatParam(cs, Props.FocusOuter, focus.focusOuter);
+            cmb.SetComputeFloatParam(cs, Props.FocusFalloff, focus.focusFalloff);
+            cmb.SetComputeFloatParam(cs, Props.FocusDepthWeight, focus.focusDepthWeight);
+            cmb.SetComputeFloatParam(cs, Props.FocusFarDistance, focus.focusFarDistance);
+            cmb.SetComputeFloatParam(cs, Props.FocusHazeStrength, focus.focusHazeStrength);
+            cmb.SetComputeFloatParam(cs, Props.FocusDesaturate, focus.focusDesaturate);
+            cmb.SetComputeVectorParam(cs, Props.FocusCoolTint, new Vector4(focus.focusCoolTint.r, focus.focusCoolTint.g, focus.focusCoolTint.b, 1f));
+
+            var ripple = m_RippleEffects;
+            cmb.SetComputeFloatParam(cs, Props.RippleActive, m_RipplePlaying ? 1f : 0f);
+            cmb.SetComputeVectorParam(cs, Props.RippleOrigin, m_RippleOrigin);
+            cmb.SetComputeFloatParam(cs, Props.RippleRadius, m_RippleRadius);
+            cmb.SetComputeFloatParam(cs, Props.RippleWidth, ripple.rippleBandWidth);
+            cmb.SetComputeFloatParam(cs, Props.RippleIntensity, ripple.rippleIntensity);
+            cmb.SetComputeVectorParam(cs, Props.RippleTint, new Vector4(ripple.rippleTint.r, ripple.rippleTint.g, ripple.rippleTint.b, 1f));
 
             cmb.SetComputeFloatParam(cs, Props.EffectTime, m_EffectTime);
         }
@@ -1261,8 +1355,52 @@ namespace GaussianSplatting.Runtime
         public DissolveEffectSettings DissolveEffects => m_DissolveEffects;
         public WaterFlowSettings WaterFlowEffects => m_WaterFlowEffects;
         public HologramScanSettings HologramScanEffects => m_HologramScanEffects;
+        public FocusTunnelSettings FocusTunnelEffects => m_FocusTunnelEffects;
+        public RipplePulseSettings RippleEffects => m_RippleEffects;
         public SplatVisualEffectMode VisualEffectMode => m_VisualEffectMode;
-        public float EffectTime => m_EffectTime;
+
+        public void SetVisualEffectMode(SplatVisualEffectMode mode) => m_VisualEffectMode = mode;
+
+        /// <summary>从 worldOrigin 向外扩散一圈暖色波纹，可叠加 FocusTunnel / HologramScan 等基础模式。</summary>
+        public void PlayRipple(Vector3 worldOrigin, float? maxRadius = null, float? duration = null)
+        {
+            if (!Application.isPlaying || !HasValidAsset)
+                return;
+            if (m_RippleCoroutine != null)
+                StopCoroutine(m_RippleCoroutine);
+            m_RippleOrigin = worldOrigin;
+            m_RippleCoroutine = StartCoroutine(RippleRoutine(maxRadius ?? m_RippleEffects.rippleMaxRadius,
+                duration ?? m_RippleEffects.rippleDuration));
+        }
+
+        public void StopRipple()
+        {
+            if (m_RippleCoroutine != null)
+            {
+                StopCoroutine(m_RippleCoroutine);
+                m_RippleCoroutine = null;
+            }
+            m_RipplePlaying = false;
+            m_RippleRadius = 0f;
+        }
+
+        System.Collections.IEnumerator RippleRoutine(float maxRadius, float duration)
+        {
+            m_RipplePlaying = true;
+            m_RippleRadius = 0f;
+            duration = Mathf.Max(duration, 0.05f);
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = elapsed / duration;
+                m_RippleRadius = Mathf.Lerp(0f, maxRadius, t);
+                yield return null;
+            }
+            m_RipplePlaying = false;
+            m_RippleRadius = 0f;
+            m_RippleCoroutine = null;
+        }
 
         public void ResetEffectTime() => m_EffectTime = 0f;
 

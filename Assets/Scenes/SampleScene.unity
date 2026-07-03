@@ -2571,7 +2571,7 @@ Camera:
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 1
-  m_AllowMSAA: 1
+  m_AllowMSAA: 0
   m_AllowDynamicResolution: 0
   m_ForceIntoRT: 0
   m_OcclusionCulling: 1
@@ -5540,7 +5540,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FirstPersonWalker
   moveSpeed: 2.5
-  floatMode: 0
+  floatMode: 1
   gravity: -9.81
   clampBounds: 0
   boundsMin: {x: -1.2, y: 0, z: -30}
@@ -8031,6 +8031,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1869591494}
   - component: {fileID: 1869591493}
+  - component: {fileID: 1869591495}
   m_Layer: 0
   m_Name: LivingRoom
   m_TagString: Untagged
@@ -8053,8 +8054,8 @@ MonoBehaviour:
   m_Asset: {fileID: 11400000, guid: a460df564a4ff974e95d3adcf467f741, type: 2}
   m_RenderOrder: 0
   m_SplatScale: 1
-  m_OpacityScale: 1
-  m_SHOrder: 3
+  m_OpacityScale: 0.92
+  m_SHOrder: 2
   m_SHOnly: 0
   m_SortNthFrame: 1
   m_RenderMode: 0
@@ -8065,25 +8066,26 @@ MonoBehaviour:
   m_ShaderDebugPoints: {fileID: 4800000, guid: b44409fc67214394f8f47e4e2648425e, type: 3}
   m_ShaderDebugBoxes: {fileID: 4800000, guid: 4006f2680fd7c8b4cbcb881454c782be, type: 3}
   m_CSSplatUtilities: {fileID: 7200000, guid: ec84f78b836bd4f96a105d6b804f08bd, type: 3}
-  m_VisualEffectMode: 3
+  m_VisualEffectMode: 5
   m_DissolveEffects:
     dissolveProgress: 0
-    dissolveEdgeWidth: 0.14
+    dissolveEdgeWidth: 0.12
     dissolveMode: 2
     dissolveDirection: {x: 0, y: 0, z: 1}
-    sparkleDensity: 26.8
-    sparkleCoverage: 0.15
-    sparklePointSize: 8.83
-    sparkleFlakeAspect: 1.2
-    sparkleIntensity: 13.94
-    sparkleSpeed: 8
-    sparkleThreshold: 0.22
+    sparkleDensity: 22
+    sparkleCoverage: 0.42
+    sparklePointSize: 3
+    sparkleFlakeAspect: 2.8
+    sparkleIntensity: 7.5
+    sparkleSpeed: 5
+    sparkleThreshold: 0.28
   m_WaterFlowEffects:
-    flowAmplitude: 0.045
-    flowSpeed: 0.55
-    flowFrequency: 1.6
-    flowDirection: {x: 1, y: 0, z: 0}
-    colorShimmer: 0.12
+    flowAmplitude: 0.022
+    flowSpeed: 0.32
+    flowFrequency: 0.85
+    flowDirection: {x: 0.25, y: 0.04, z: 0.6}
+    colorShimmer: 0.05
+    flowOverlay: 1
   m_HologramScanEffects:
     scanSpeed: 0.75
     scanWaveScale: 1.4
@@ -8092,6 +8094,33 @@ MonoBehaviour:
     scanIntensity: 1.2
     scanColorMix: 0.55
     scanTint: {r: 0.45, g: 0.95, b: 1, a: 1}
+  m_FocusTunnelEffects:
+    focusInner: 0.42
+    focusOuter: 1.05
+    focusFalloff: 1.5
+    focusDepthWeight: 0.38
+    focusFarDistance: 18
+    focusHazeStrength: 0.26
+    focusDesaturate: 0.18
+    focusCoolTint: {r: 0.78, g: 0.84, b: 0.92, a: 1}
+--- !u!114 &1869591495
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1869591492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c4e9a2b1f8d4e6c9b0a3d5e7f1c2b4a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SplatSceneTransition
+  splat: {fileID: 1869591493}
+  idleMode: 5
+  exitDuration: 2
+  enterDuration: 2.2
+  sparkleCoverage: 0.55
+  sparkleIntensity: 10
 --- !u!4 &1869591494
 Transform:
   m_ObjectHideFlags: 0
@@ -8680,11 +8709,11 @@ GameObject:
   - component: {fileID: 1975208721}
   m_Layer: 0
   m_Name: MainCamera
-  m_TagString: MainCamera
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1975208720
 Transform:
   m_ObjectHideFlags: 0
@@ -8707,7 +8736,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1975208719}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!20 &1975208722
 Camera:
   m_ObjectHideFlags: 0
@@ -8715,7 +8744,7 @@ Camera:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1975208719}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_ClearFlags: 1
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
@@ -8753,7 +8782,7 @@ Camera:
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 1
-  m_AllowMSAA: 1
+  m_AllowMSAA: 0
   m_AllowDynamicResolution: 0
   m_ForceIntoRT: 0
   m_OcclusionCulling: 1
@@ -9430,7 +9459,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2081582659
 Transform:
   m_ObjectHideFlags: 0

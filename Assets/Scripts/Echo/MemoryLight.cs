@@ -78,6 +78,9 @@ public class MemoryLight : MonoBehaviour
         }
         StartCoroutine(BloomRoutine());
         EchoGameManager.Instance?.NotifyAwakened();
+
+        var splat = FindFirstObjectByType<GaussianSplatting.Runtime.GaussianSplatRenderer>();
+        splat?.PlayRipple(transform.position);
     }
 
     IEnumerator BloomRoutine()

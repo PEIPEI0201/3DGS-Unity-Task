@@ -109,14 +109,32 @@ float _WaterFlowSpeed;
 float _WaterFlowFrequency;
 float3 _WaterFlowDirection;
 float _WaterFlowColorShimmer;
+float _WaterFlowOverlay;
 
 float _HologramScanSpeed;
 float _HologramScanWaveScale;
 float _HologramScanBandWidth;
 float3 _HologramScanDirection;
+float3 _HologramScanWorldDirection;
 float _HologramScanIntensity;
 float _HologramScanColorMix;
 float3 _HologramScanTint;
+
+float _FocusInner;
+float _FocusOuter;
+float _FocusFalloff;
+float _FocusDepthWeight;
+float _FocusFarDistance;
+float _FocusHazeStrength;
+float _FocusDesaturate;
+float3 _FocusCoolTint;
+
+float _RippleActive;
+float3 _RippleOrigin;
+float _RippleRadius;
+float _RippleWidth;
+float _RippleIntensity;
+float3 _RippleTint;
 
 float _EffectTime;
 
@@ -224,9 +242,14 @@ float GlitterHash(uint idx, float3 pos, float scale)
     return frac(sin(dot(p, float3(12.9898, 78.233, 45.164))) * 43758.5453);
 }
 
+bool ShouldApplyWaterFlow()
+{
+    return _VisualEffectMode == 3 || (_WaterFlowOverlay > 0.5 && _WaterFlowAmplitude > 0.0001);
+}
+
 float3 ApplyWaterFlowOffset(float3 localPos)
 {
-    if (_VisualEffectMode != 3)
+    if (!ShouldApplyWaterFlow())
         return localPos;
 
     float3 dir1 = normalize(_WaterFlowDirection);
@@ -241,12 +264,13 @@ float3 ApplyWaterFlowOffset(float3 localPos)
 
 void ApplyWaterFlowColor(float3 localPos, inout half4 col)
 {
-    if (_VisualEffectMode != 3 || _WaterFlowColorShimmer <= 0)
+    if (!ShouldApplyWaterFlow() || _WaterFlowColorShimmer <= 0)
         return;
 
     float3 dir1 = normalize(_WaterFlowDirection);
     float shimmer = sin(dot(localPos, dir1) * _WaterFlowFrequency * 0.75 + _EffectTime * _WaterFlowSpeed) * 0.5 + 0.5;
-    shimmer = lerp(1.0, 0.88 + shimmer * 0.12, _WaterFlowColorShimmer);
+    float shimmerStrength = _WaterFlowOverlay > 0.5 ? _WaterFlowColorShimmer * 2.2 : _WaterFlowColorShimmer;
+    shimmer = lerp(1.0, _WaterFlowOverlay > 0.5 ? (0.78 + shimmer * 0.28) : (0.88 + shimmer * 0.12), shimmerStrength);
     col.rgb *= shimmer;
 }
 
@@ -343,26 +367,72 @@ float ApplyDissolveSparkle(uint idx, float3 localPos, inout float4 centerClipPos
     return 0;
 }
 
+// Mode 5: peripheral + depth foveated haze — center sharp, edges and distance dissolve into cool fog
+void ApplyFocusTunnel(float4 centerClipPos, float3 centerWorldPos, inout half4 col)
+{
+    if (_VisualEffectMode != 5)
+        return;
+    if (centerClipPos.w <= 0)
+        return;
+
+    float2 ndc = centerClipPos.xy / centerClipPos.w;
+    float peripheral = length(ndc);
+    float pMask = smoothstep(_FocusInner, _FocusOuter, peripheral);
+    pMask = pow(saturate(pMask), max(_FocusFalloff, 0.01));
+
+    float dist = distance(centerWorldPos, _VecWorldSpaceCameraPos.xyz);
+    float dMask = saturate(dist / max(_FocusFarDistance, 0.01));
+    dMask = pow(dMask, 1.15) * _FocusDepthWeight;
+
+    float unfocus = saturate(pMask + dMask - pMask * dMask * 0.45);
+    unfocus *= _FocusHazeStrength;
+
+    float gray = dot(col.rgb, float3(0.299, 0.587, 0.114));
+    float3 hazeCol = lerp(_FocusCoolTint * (0.55 + gray * 0.45), float3(gray, gray, gray), _FocusDesaturate);
+    col.rgb = lerp(col.rgb, hazeCol, unfocus);
+    col.a *= 1.0 - unfocus * 0.82;
+}
+
+// Overlay: expanding ring in world space — stacks on top of any base mode
+void ApplyRippleOverlay(float3 centerWorldPos, inout half4 col)
+{
+    if (_RippleActive < 0.5)
+        return;
+
+    float dist = distance(centerWorldPos, _RippleOrigin);
+    float ring = abs(dist - _RippleRadius);
+    float band = smoothstep(_RippleWidth, 0.0, ring);
+    band = pow(saturate(band), 1.35);
+    col.rgb += _RippleTint * band * _RippleIntensity;
+    col.a = min(col.a * (1.0 + band * 0.35), 65000);
+}
+
 void ApplyHologramScan(float3 localPos, inout half4 col)
 {
     if (_VisualEffectMode != 4)
         return;
 
+    float3 boundsSize = max(_DissolveBoundsMax - _DissolveBoundsMin, float3(1e-4, 1e-4, 1e-4));
+    float3 normPos = saturate((localPos - _DissolveBoundsMin) / boundsSize);
     float3 dir = normalize(_HologramScanDirection);
-    float along = dot(localPos, dir) * _HologramScanWaveScale;
+    float primary = dot(normPos, dir);
+    float3 worldPos = mul(_MatrixObjectToWorld, float4(localPos, 1)).xyz;
+    float3 worldDir = normalize(_HologramScanWorldDirection);
+    float worldAlong = dot(worldPos, worldDir);
+    float along = lerp(primary, worldAlong * 0.08, 0.35) * _HologramScanWaveScale;
     float wave = frac(along - _EffectTime * _HologramScanSpeed);
-    float band = smoothstep(_HologramScanBandWidth, 0.0, wave);
-    band *= smoothstep(_HologramScanBandWidth + 0.18, _HologramScanBandWidth * 0.35, wave);
-    band = pow(saturate(band), 1.25);
-    band = max(band, pow(saturate(1.0 - abs(wave - 0.5) * 2.0), 6.0) * 0.12);
+    float band = 1.0 - smoothstep(0.0, _HologramScanBandWidth, wave);
+    float glow = exp(-wave * 4.5) * 0.55;
+    band = saturate(band + glow);
+    band = pow(band, 1.02);
 
-    if (band < 0.01)
+    if (band < 0.005)
         return;
 
     float boost = band * _HologramScanIntensity;
     col.rgb = lerp(col.rgb, col.rgb + _HologramScanTint * boost, _HologramScanColorMix);
-    col.rgb += float3(1, 1, 1) * boost * 0.28;
-    col.a = min(col.a * (1.0 + band * 0.12), 65000);
+    col.rgb += float3(1, 1, 1) * boost * 0.4;
+    col.a = min(col.a * (1.0 + band * 0.2), 65000);
 }
 
 [numthreads(GROUP_SIZE,1,1)]
@@ -425,6 +495,8 @@ void CSCalcViewData (uint3 id : SV_DispatchThreadID)
         col.rgb = ShadeSH(splat.sh, objViewDir, _SHOrder, _SHOnly != 0);
         col.a = min(splat.opacity * opacityScale, 65000);
 
+        ApplyFocusTunnel(centerClipPos, centerWorldPos, col);
+        ApplyRippleOverlay(centerWorldPos, col);
         ApplyWaterFlowColor(flowPos, col);
         ApplyHologramScan(flowPos, col);
 

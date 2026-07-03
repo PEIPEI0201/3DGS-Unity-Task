@@ -436,7 +436,7 @@ Camera:
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 1
-  m_AllowMSAA: 1
+  m_AllowMSAA: 0
   m_AllowDynamicResolution: 0
   m_ForceIntoRT: 0
   m_OcclusionCulling: 1
@@ -1052,6 +1052,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1837284616}
   - component: {fileID: 1837284615}
+  - component: {fileID: 1837284617}
   m_Layer: 0
   m_Name: EmptyRoom_GS
   m_TagString: Untagged
@@ -1074,7 +1075,7 @@ MonoBehaviour:
   m_Asset: {fileID: 11400000, guid: e13376fe62f92784cb99749cacf57ea0, type: 2}
   m_RenderOrder: 0
   m_SplatScale: 1
-  m_OpacityScale: 1
+  m_OpacityScale: 0.95
   m_SHOrder: 3
   m_SHOnly: 0
   m_SortNthFrame: 1
@@ -1086,7 +1087,7 @@ MonoBehaviour:
   m_ShaderDebugPoints: {fileID: 4800000, guid: b44409fc67214394f8f47e4e2648425e, type: 3}
   m_ShaderDebugBoxes: {fileID: 4800000, guid: 4006f2680fd7c8b4cbcb881454c782be, type: 3}
   m_CSSplatUtilities: {fileID: 7200000, guid: ec84f78b836bd4f96a105d6b804f08bd, type: 3}
-  m_VisualEffectMode: 1
+  m_VisualEffectMode: 5
   m_DissolveEffects:
     dissolveProgress: 0
     dissolveEdgeWidth: 0.1
@@ -1100,11 +1101,12 @@ MonoBehaviour:
     sparkleSpeed: 8
     sparkleThreshold: 0.22
   m_WaterFlowEffects:
-    flowAmplitude: 0.045
+    flowAmplitude: 0.035
     flowSpeed: 0.55
-    flowFrequency: 1.6
-    flowDirection: {x: 1, y: 0, z: 0}
-    colorShimmer: 0.12
+    flowFrequency: 1.5
+    flowDirection: {x: 0.25, y: 0.12, z: 0.4}
+    colorShimmer: 0.16
+    flowOverlay: 1
   m_HologramScanEffects:
     scanSpeed: 0.75
     scanWaveScale: 1.4
@@ -1113,6 +1115,33 @@ MonoBehaviour:
     scanIntensity: 1.2
     scanColorMix: 0.55
     scanTint: {r: 0.45, g: 0.95, b: 1, a: 1}
+  m_FocusTunnelEffects:
+    focusInner: 0.62
+    focusOuter: 1.15
+    focusFalloff: 1.4
+    focusDepthWeight: 0.25
+    focusFarDistance: 14
+    focusHazeStrength: 0.22
+    focusDesaturate: 0.15
+    focusCoolTint: {r: 0.88, g: 0.82, b: 0.72, a: 1}
+--- !u!114 &1837284617
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1837284614}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c4e9a2b1f8d4e6c9b0a3d5e7f1c2b4a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SplatSceneTransition
+  splat: {fileID: 1837284615}
+  idleMode: 5
+  exitDuration: 2
+  enterDuration: 2.2
+  sparkleCoverage: 0.55
+  sparkleIntensity: 10
 --- !u!4 &1837284616
 Transform:
   m_ObjectHideFlags: 0

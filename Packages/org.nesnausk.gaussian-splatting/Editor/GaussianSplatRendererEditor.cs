@@ -39,6 +39,8 @@ namespace GaussianSplatting.Editor
         SerializedProperty m_PropDissolveEffects;
         SerializedProperty m_PropWaterFlowEffects;
         SerializedProperty m_PropHologramScanEffects;
+        SerializedProperty m_PropFocusTunnelEffects;
+        SerializedProperty m_PropRippleEffects;
 
         bool m_ResourcesExpanded = false;
         bool m_EffectsExpanded = true;
@@ -84,6 +86,8 @@ namespace GaussianSplatting.Editor
             m_PropDissolveEffects = serializedObject.FindProperty("m_DissolveEffects");
             m_PropWaterFlowEffects = serializedObject.FindProperty("m_WaterFlowEffects");
             m_PropHologramScanEffects = serializedObject.FindProperty("m_HologramScanEffects");
+            m_PropFocusTunnelEffects = serializedObject.FindProperty("m_FocusTunnelEffects");
+            m_PropRippleEffects = serializedObject.FindProperty("m_RippleEffects");
 
             s_AllEditors.Add(this);
         }
@@ -171,7 +175,7 @@ namespace GaussianSplatting.Editor
                 EditorGUILayout.PropertyField(m_PropVisualEffectMode, new GUIContent("当前效果"));
 
             var mode = (SplatVisualEffectMode)m_PropVisualEffectMode.enumValueIndex;
-            EditorGUILayout.HelpBox("细闪溶解：白色闪片边缘由近向远消散。水波流动：场景柔美波动。全息扫描：青色光带循环扫过场景。", MessageType.Info);
+            EditorGUILayout.HelpBox("细闪溶解：白色闪片边缘消散。水波流动：柔美波动。全息扫描：光带扫过。注视隧道：屏幕中心清晰、外围与远处冷雾虚化（解离/聚焦）。", MessageType.Info);
 
             if (mode == SplatVisualEffectMode.DissolveSparkle && m_PropDissolveEffects != null)
             {
@@ -225,6 +229,53 @@ namespace GaussianSplatting.Editor
                 EditorGUILayout.PropertyField(m_PropHologramScanEffects.FindPropertyRelative("scanIntensity"), new GUIContent("光带亮度"));
                 EditorGUILayout.PropertyField(m_PropHologramScanEffects.FindPropertyRelative("scanColorMix"), new GUIContent("色调混合"));
                 EditorGUILayout.PropertyField(m_PropHologramScanEffects.FindPropertyRelative("scanTint"), new GUIContent("扫描色调"));
+            }
+
+            if (mode == SplatVisualEffectMode.FocusTunnel && m_PropFocusTunnelEffects != null)
+            {
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField("注视隧道 / 景深聚焦", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(m_PropFocusTunnelEffects.FindPropertyRelative("focusInner"), new GUIContent("中心清晰半径"));
+                EditorGUILayout.PropertyField(m_PropFocusTunnelEffects.FindPropertyRelative("focusOuter"), new GUIContent("外围虚化起点"));
+                EditorGUILayout.PropertyField(m_PropFocusTunnelEffects.FindPropertyRelative("focusFalloff"), new GUIContent("虚化曲线"));
+                EditorGUILayout.PropertyField(m_PropFocusTunnelEffects.FindPropertyRelative("focusDepthWeight"), new GUIContent("距离虚化权重"));
+                EditorGUILayout.PropertyField(m_PropFocusTunnelEffects.FindPropertyRelative("focusFarDistance"), new GUIContent("距离参考(米)"));
+                EditorGUILayout.PropertyField(m_PropFocusTunnelEffects.FindPropertyRelative("focusHazeStrength"), new GUIContent("虚化强度"));
+                EditorGUILayout.PropertyField(m_PropFocusTunnelEffects.FindPropertyRelative("focusDesaturate"), new GUIContent("外围去饱和"));
+                EditorGUILayout.PropertyField(m_PropFocusTunnelEffects.FindPropertyRelative("focusCoolTint"), new GUIContent("外围冷色调"));
+            }
+
+            if (m_PropWaterFlowEffects != null && mode != SplatVisualEffectMode.WaterFlow)
+            {
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField("微粒流动 (叠加层)", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(m_PropWaterFlowEffects.FindPropertyRelative("flowOverlay"), new GUIContent("启用叠加"));
+                EditorGUILayout.PropertyField(m_PropWaterFlowEffects.FindPropertyRelative("flowAmplitude"), new GUIContent("波动幅度"));
+                EditorGUILayout.PropertyField(m_PropWaterFlowEffects.FindPropertyRelative("flowSpeed"), new GUIContent("流动速度"));
+                EditorGUILayout.PropertyField(m_PropWaterFlowEffects.FindPropertyRelative("flowFrequency"), new GUIContent("波纹频率"));
+                EditorGUILayout.PropertyField(m_PropWaterFlowEffects.FindPropertyRelative("flowDirection"), new GUIContent("主流动方向"));
+                EditorGUILayout.PropertyField(m_PropWaterFlowEffects.FindPropertyRelative("colorShimmer"), new GUIContent("柔光起伏"));
+            }
+
+            if (m_PropRippleEffects != null)
+            {
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField("觉醒波纹 (叠加层)", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(m_PropRippleEffects.FindPropertyRelative("rippleTint"), new GUIContent("波纹颜色"));
+                EditorGUILayout.PropertyField(m_PropRippleEffects.FindPropertyRelative("rippleIntensity"), new GUIContent("亮度"));
+                EditorGUILayout.PropertyField(m_PropRippleEffects.FindPropertyRelative("rippleBandWidth"), new GUIContent("波带宽度"));
+                EditorGUILayout.PropertyField(m_PropRippleEffects.FindPropertyRelative("rippleMaxRadius"), new GUIContent("最大半径"));
+                EditorGUILayout.PropertyField(m_PropRippleEffects.FindPropertyRelative("rippleDuration"), new GUIContent("持续时间"));
+                using (new EditorGUI.DisabledScope(!Application.isPlaying))
+                {
+                    if (GUILayout.Button("预览波纹 (从物体中心)", GUILayout.Height(24)))
+                    {
+                        var cam = Camera.main;
+                        var origin = gs.transform.position;
+                        if (cam != null) origin = cam.transform.position + cam.transform.forward * 2f;
+                        gs.PlayRipple(origin);
+                    }
+                }
             }
 
             EditorGUILayout.Space();
